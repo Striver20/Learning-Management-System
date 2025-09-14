@@ -1,0 +1,18 @@
+# Backend secrets
+/backend/src/main/resources/application.properties
+
+# Build outputs
+/backend/target
+/frontend/build
+
+# Node modules
+/frontend/node_modules
+/backend/node_modules
+
+# IDE & system files
+.idea
+*.iml
+.DS_Store
+
+# Ignore environment variables
+.env
