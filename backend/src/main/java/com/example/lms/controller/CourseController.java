@@ -7,6 +7,11 @@ import com.example.lms.entity.User;
 import com.example.lms.mapper.EntityMapper;
 import com.example.lms.service.CourseService;
 import com.example.lms.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,12 +22,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/courses")
 @RequiredArgsConstructor
+@Tag(name = "Courses", description = "Course management endpoints - Create, retrieve, and delete courses")
 public class CourseController {
 
     private final CourseService courseService;
     private final UserService userService;
 
-    // ✅ Create a new course (Teacher only)
+    @Operation(summary = "Create a new course", description = "Create a course (Teacher only)",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Course created successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied - Teacher role required"),
+            @ApiResponse(responseCode = "404", description = "Instructor not found")
+    })
     @PreAuthorize("hasRole('TEACHER')")
     @PostMapping
     public ResponseEntity<CourseDTO> createCourse(@RequestBody CourseRequest request,
@@ -34,7 +46,8 @@ public class CourseController {
         return ResponseEntity.ok(EntityMapper.toCourseDTO(course));
     }
 
-    // ✅ List all courses
+    @Operation(summary = "Get all courses", description = "Retrieve list of all available courses")
+    @ApiResponse(responseCode = "200", description = "Courses retrieved successfully")
     @GetMapping
     public ResponseEntity<List<CourseDTO>> getAllCourses() {
         return ResponseEntity.ok(
@@ -44,7 +57,12 @@ public class CourseController {
         );
     }
 
-    // ✅ Get courses by instructor
+    @Operation(summary = "Get courses by instructor", description = "Retrieve all courses taught by a specific instructor",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Courses retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Instructor not found")
+    })
     @PreAuthorize("hasAnyRole('STUDENT','TEACHER','ADMIN')")
     @GetMapping("/instructor")
     public ResponseEntity<List<CourseDTO>> getCoursesByInstructor(@RequestParam String email) {
@@ -58,7 +76,12 @@ public class CourseController {
         );
     }
 
-    // ✅ Get single course by ID
+    @Operation(summary = "Get course by ID", description = "Retrieve detailed information about a specific course",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Course found"),
+            @ApiResponse(responseCode = "404", description = "Course not found")
+    })
     @PreAuthorize("hasAnyRole('STUDENT','TEACHER','ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<CourseDTO> getCourseById(@PathVariable Long id) {
@@ -68,7 +91,13 @@ public class CourseController {
         return ResponseEntity.ok(EntityMapper.toCourseDTO(course));
     }
 
-    // ✅ Delete a course (Admin only)
+    @Operation(summary = "Delete a course", description = "Delete a course and all related data (Admin only)",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Course deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied - Admin role required"),
+            @ApiResponse(responseCode = "404", description = "Course not found")
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteCourse(@PathVariable Long id) {

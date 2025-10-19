@@ -8,6 +8,11 @@ import com.example.lms.mapper.EntityMapper;
 import com.example.lms.service.ContentService;
 import com.example.lms.service.CourseService;
 import com.example.lms.service.S3Service;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,12 +25,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/contents")
 @RequiredArgsConstructor
+@Tag(name = "Content", description = "Course content management with AWS S3 file upload integration")
 public class ContentController {
 
     private final ContentService contentService;
     private final CourseService courseService;
     private final S3Service s3Service;
 
+    @Operation(summary = "Upload content with file to S3", 
+            description = "Upload course content file to AWS S3 and store metadata (Teacher only)",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Content uploaded successfully to AWS S3"),
+            @ApiResponse(responseCode = "403", description = "Access denied - Teacher role required"),
+            @ApiResponse(responseCode = "404", description = "Course not found"),
+            @ApiResponse(responseCode = "500", description = "S3 upload failed")
+    })
     @PreAuthorize("hasRole('TEACHER')")
     @PostMapping("/upload")
     public ResponseEntity<Content> uploadContent(
@@ -57,7 +72,12 @@ public class ContentController {
     }
 
 
-    // Add content to a course
+    @Operation(summary = "Add content to course", description = "Add content metadata to a course",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Content added successfully"),
+            @ApiResponse(responseCode = "404", description = "Course not found")
+    })
     @PostMapping
     public ResponseEntity<ContentDTO> addContent(@RequestParam Long courseId,
                                                  @RequestBody ContentDTO contentDTO) {
@@ -68,7 +88,12 @@ public class ContentController {
         return ResponseEntity.ok(EntityMapper.toContentDTO(savedContent));
     }
 
-    // Get contents of a course
+    @Operation(summary = "Get course contents", description = "Retrieve all content items for a specific course",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Contents retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Course not found")
+    })
     @GetMapping
     public ResponseEntity<List<ContentDTO>> getContentsByCourse(@RequestParam Long courseId) {
         Course course = courseService.findById(courseId)
@@ -81,6 +106,14 @@ public class ContentController {
 
         return ResponseEntity.ok(contents);
     }
+    @Operation(summary = "Delete content", 
+            description = "Delete content from database and AWS S3 (Teacher only)",
+            security = @SecurityRequirement(name = "Bearer JWT"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Content deleted successfully"),
+            @ApiResponse(responseCode = "403", description = "Access denied - Teacher role required"),
+            @ApiResponse(responseCode = "404", description = "Content not found")
+    })
     @PreAuthorize("hasRole('TEACHER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteContent(@PathVariable Long id) {
