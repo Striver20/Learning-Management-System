@@ -284,50 +284,69 @@ _Note: Replace placeholder images with actual screenshots of your Swagger UI and
 
 ## 🌐 Deployment
 
-### AWS Deployment (Current Setup)
+### Current Status: Development Ready
 
-This application is deployed on AWS infrastructure:
+This application is **production-ready** and designed for AWS deployment. Currently running locally with AWS S3 integration configured.
 
-- **EC2 Instance**: Free-tier t2.micro running the Spring Boot application
-- **RDS MySQL**: Managed database service for production data
-- **S3 Bucket**: Scalable storage for course content and materials
-- **Route 53**: DNS management (optional)
+### AWS Infrastructure (Configured & Ready)
 
-### Deployment Steps
+The application is built to deploy on:
 
-1. **Build the JAR file**
+- **EC2 Instance**: Free-tier t2.micro for running Spring Boot
+- **RDS MySQL**: For production database (currently using local MySQL)
+- **S3 Bucket**: Configured for course content storage (`lms-springboot-s3`)
+- **Region**: Asia Pacific (Sydney) `ap-southeast-2`
 
+### Local Development Setup ✅
+
+```bash
+# Currently running on
+Server: localhost:8080
+Database: MySQL 8.0 (local)
+File Storage: AWS S3 (ap-southeast-2)
+```
+
+### Deployment-Ready Features
+
+- ✅ JAR packaging configured
+- ✅ Environment variable management
+- ✅ AWS S3 SDK integrated
+- ✅ Production-grade security
+- ✅ Cloud-native architecture
+
+### Quick Deployment Guide (When Ready)
+
+1. **Build production JAR**
    ```bash
    mvn clean package -DskipTests
    ```
 
-2. **Upload to EC2**
-
-   ```bash
-   scp -i your-key.pem target/lms-0.0.1-SNAPSHOT.jar ec2-user@your-ec2-ip:/home/ec2-user/
+2. **Set up AWS RDS MySQL**
+   ```sql
+   -- Update connection string in application.properties
+   spring.datasource.url=jdbc:mysql://your-rds-endpoint:3306/lmsdb
    ```
 
-3. **Run on EC2**
-
+3. **Deploy to EC2**
    ```bash
-   ssh -i your-key.pem ec2-user@your-ec2-ip
+   scp -i key.pem target/lms-0.0.1-SNAPSHOT.jar ec2-user@ec2-ip:/home/ec2-user/
+   ssh -i key.pem ec2-user@ec2-ip
    java -jar lms-0.0.1-SNAPSHOT.jar
    ```
 
-4. **Set up as systemd service** (recommended for production)
-   ```bash
-   sudo systemctl enable lms
-   sudo systemctl start lms
-   ```
+4. **Configure S3 bucket permissions**
+   - Ensure IAM role has S3 access
+   - Update bucket policy for public read (if needed)
 
-### Environment Configuration
+### Why Not Deployed Yet?
 
-Make sure to set production environment variables:
+This is a **portfolio/learning project** demonstrating enterprise application development. The focus is on:
+- Clean architecture and design patterns
+- Production-ready code quality
+- AWS integration capabilities
+- Modern development practices
 
-- Database connection strings
-- AWS credentials (use IAM roles for EC2)
-- JWT secret key (strong, random value)
-- Logging configuration
+_For production deployment, I can set up AWS infrastructure within an hour if needed._
 
 ## Project Structure
 
