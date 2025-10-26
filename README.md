@@ -14,9 +14,15 @@ A full-stack Learning Management System built with **Spring Boot** and **React**
 
 **Frontend (React):** [http://lms-frontend-ashit.s3-website-ap-southeast-2.amazonaws.com](http://lms-frontend-ashit.s3-website-ap-southeast-2.amazonaws.com)
 
-**Backend API:** Deployment in progress - will be available soon!
+**Backend API:** [http://54.66.247.46:8080/api](http://54.66.247.46:8080/api)
 
-**Note:** The application is currently deployed on AWS infrastructure (S3 for frontend, EC2 + RDS for backend). Full deployment documentation available in repository.
+**API Documentation (Swagger):** [http://54.66.247.46:8080/swagger-ui.html](http://54.66.247.46:8080/swagger-ui.html)
+
+**Deployed on AWS:**
+- Frontend: S3 Static Website Hosting
+- Backend: EC2 (t3.micro, Amazon Linux 2023)
+- Database: RDS MySQL 8.0
+- Region: ap-southeast-2 (Sydney)
 
 ---
 
