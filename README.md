@@ -479,7 +479,7 @@ This is a portfolio project, but I'm open to feedback and suggestions!
 
 ## 📄 License
 
-This project is licensed under the MIT License - feel free to use it for learning or your own portfolio!
+This project is open for educational and portfolio purposes.
 
 ---
 
