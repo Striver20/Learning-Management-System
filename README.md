@@ -19,6 +19,7 @@ A full-stack Learning Management System built with **Spring Boot** and **React**
 **API Documentation (Swagger):** [http://54.66.247.46:8080/swagger-ui.html](http://54.66.247.46:8080/swagger-ui.html)
 
 **Deployed on AWS:**
+
 - Frontend: S3 Static Website Hosting
 - Backend: EC2 (t3.micro, Amazon Linux 2023)
 - Database: RDS MySQL 8.0
