@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Authentication", description = "User authentication and registration endpoints")
 public class AuthController {
 
@@ -41,7 +43,9 @@ public class AuthController {
     })
     @PostMapping("/register")
     public ResponseEntity<UserDTO> register(@RequestBody RegisterRequest request) {
+        log.info("📥 Register endpoint hit - Email: {}, Roles: {}", request.getEmail(), request.getRoles());
         User saved = userService.registerUser(request); // now takes DTO
+        log.info("✅ Registration successful - User ID: {}", saved.getId());
         return ResponseEntity.ok(EntityMapper.toUserDTO(saved));
     }
 

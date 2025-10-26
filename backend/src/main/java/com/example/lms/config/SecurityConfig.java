@@ -38,8 +38,20 @@ public class SecurityConfig {
                 }))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // important
                 .authorizeHttpRequests(auth -> auth
-                        // Public
+                        // Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
+                        
+                        // Swagger UI and API docs
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
+                        
+                        // H2 Console (for development)
+                        .requestMatchers("/h2-console/**").permitAll()
 
                         // Courses
                         .requestMatchers(HttpMethod.GET, "/api/courses/**").hasAnyRole("STUDENT", "TEACHER", "ADMIN")

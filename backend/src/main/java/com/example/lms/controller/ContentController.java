@@ -7,6 +7,7 @@ import com.example.lms.entity.Course;
 import com.example.lms.mapper.EntityMapper;
 import com.example.lms.service.ContentService;
 import com.example.lms.service.CourseService;
+import com.example.lms.service.LocalFileStorageService;
 import com.example.lms.service.S3Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,6 +32,7 @@ public class ContentController {
     private final ContentService contentService;
     private final CourseService courseService;
     private final S3Service s3Service;
+    private final LocalFileStorageService localFileStorageService;
 
     @Operation(summary = "Upload content with file to S3", 
             description = "Upload course content file to AWS S3 and store metadata (Teacher only)",
@@ -51,8 +53,18 @@ public class ContentController {
             @RequestParam Integer orderIndex,
             @RequestParam("file") MultipartFile file) {
 
-        // Upload file to S3 → returns object with url + key
-        S3FileResponse s3Response = s3Service.uploadFile(file);
+        S3FileResponse fileResponse;
+        
+        try {
+            // Try S3 upload first
+            fileResponse = s3Service.uploadFile(file);
+            System.out.println("✅ File uploaded to S3: " + fileResponse.getFileUrl());
+        } catch (Exception e) {
+            // Fallback to local storage if S3 fails
+            System.err.println("⚠️ S3 upload failed, using local storage: " + e.getMessage());
+            fileResponse = localFileStorageService.uploadFile(file);
+            System.out.println("✅ File saved locally: " + fileResponse.getFileUrl());
+        }
 
         Course course = courseService.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
@@ -60,8 +72,8 @@ public class ContentController {
         Content content = Content.builder()
                 .title(title)
                 .description(description)
-                .fileUrl(s3Response.getFileUrl()) // ✅ use getter
-                .s3Key(s3Response.getKey())       // ✅ use getter
+                .fileUrl(fileResponse.getFileUrl()) // ✅ use getter
+                .s3Key(fileResponse.getKey())       // ✅ use getter
                 .contentType(contentType)
                 .orderIndex(orderIndex)
                 .createdAt(LocalDateTime.now())
@@ -121,17 +133,28 @@ public class ContentController {
                 .orElseThrow(() -> new RuntimeException("Content not found"));
 
         try {
-            // Try deleting from S3
-            s3Service.deleteFile(content.getS3Key());
+            // Try deleting from S3 first
+            if (content.getS3Key() != null) {
+                s3Service.deleteFile(content.getS3Key());
+                System.out.println("✅ Deleted from S3: " + content.getS3Key());
+            }
         } catch (Exception e) {
-            // Log a warning but don't block DB deletion
-            System.err.println("⚠️ Could not delete from S3 (maybe already deleted): " + e.getMessage());
+            // If S3 fails, try local storage
+            System.err.println("⚠️ S3 delete failed, trying local storage: " + e.getMessage());
+            try {
+                if (content.getS3Key() != null) {
+                    localFileStorageService.deleteFile(content.getS3Key());
+                    System.out.println("✅ Deleted from local storage: " + content.getS3Key());
+                }
+            } catch (Exception localException) {
+                System.err.println("⚠️ Local file delete also failed: " + localException.getMessage());
+            }
         }
 
         // Always delete from DB
         contentService.deleteContent(id);
 
-        return ResponseEntity.ok("Content deleted successfully (S3 file may have already been removed)");
+        return ResponseEntity.ok("Content deleted successfully");
     }
 
 

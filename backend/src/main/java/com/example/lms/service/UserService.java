@@ -9,6 +9,7 @@ import com.example.lms.exception.ResourceNotFoundException;
 import com.example.lms.repository.RoleRepository;
 import com.example.lms.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,14 +20,19 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     public User registerUser(RegisterRequest request) {
+        log.info("🔵 Registration request received for email: {}", request.getEmail());
+        log.info("🔵 Requested roles: {}", request.getRoles());
+        
         // ✅ Check duplicate email
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.error("❌ Email already registered: {}", request.getEmail());
             throw new ConflictException("Email already registered: " + request.getEmail());
         }
 
@@ -41,20 +47,34 @@ public class UserService {
 
         // ✅ Assign roles
         if (request.getRoles() == null || request.getRoles().isEmpty()) {
+            log.info("🔵 No roles specified, defaulting to ROLE_STUDENT");
             Role studentRole = roleRepository.findByRoleName(RoleName.ROLE_STUDENT)
                     .orElseThrow(() -> new ResourceNotFoundException("ROLE_STUDENT not found in database"));
             user.setRoles(Set.of(studentRole));
         } else {
             Set<Role> roles = new HashSet<>();
             for (String roleName : request.getRoles()) {
-                Role role = roleRepository.findByRoleName(RoleName.valueOf(roleName))
-                        .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + roleName));
-                roles.add(role);
+                log.info("🔵 Looking for role: {}", roleName);
+                try {
+                    RoleName roleNameEnum = RoleName.valueOf(roleName);
+                    log.info("🔵 Parsed role enum: {}", roleNameEnum);
+                    
+                    Role role = roleRepository.findByRoleName(roleNameEnum)
+                            .orElseThrow(() -> new ResourceNotFoundException("Role not found in DB: " + roleName));
+                    log.info("✅ Found role in DB: {} (ID: {})", role.getRoleName(), role.getId());
+                    roles.add(role);
+                } catch (IllegalArgumentException e) {
+                    log.error("❌ Invalid role name: {}. Valid values: ROLE_STUDENT, ROLE_TEACHER, ROLE_ADMIN", roleName);
+                    throw new ResourceNotFoundException("Invalid role name: " + roleName);
+                }
             }
             user.setRoles(roles);
+            log.info("✅ Assigned {} role(s) to user", roles.size());
         }
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        log.info("✅ User registered successfully with ID: {}", savedUser.getId());
+        return savedUser;
     }
 
     public Optional<User> findByEmail(String email) {

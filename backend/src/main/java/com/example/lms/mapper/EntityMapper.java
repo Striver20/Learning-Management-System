@@ -86,6 +86,7 @@ public class EntityMapper {
     public static ProgressDTO toProgressDTO(Progress progress) {
         return ProgressDTO.builder()
                 .id(progress.getId())
+                .contentId(progress.getContent().getId())  // ✅ Added to identify which content
                 .courseTitle(progress.getEnrollment().getCourse().getTitle())
                 .contentTitle(progress.getContent().getTitle())
                 .percentComplete(progress.getPercentComplete())
